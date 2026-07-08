@@ -1,6 +1,8 @@
 import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from './dashboard';
+import { TechnicianListComponent } from './technicians/technician-list.component';
+import { CustomerListComponent } from './customers/customer-list.component';
 import { 
   LucideAngularModule, LayoutDashboard, Users, Wrench, ClipboardList, 
   Bell, Search, TrendingUp, TrendingDown, MapPin, Clock, CheckCircle2, 
@@ -22,7 +24,7 @@ export interface NotificationItem {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, TechnicianListComponent, CustomerListComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
