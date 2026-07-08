@@ -338,289 +338,292 @@
       </div>
       }
 
-      @if (page() === 'workorders') {
-      <div class="flex flex-col gap-6 animate-fade-in w-full"></div>
-        <div
-          class="flex justify-between items-center bg-slate-900/60 border border-slate-800 p-6 rounded-2xl backdrop-blur-md w-full">
-          <div>
-            <h1 class="text-2xl font-bold text-white tracking-wide">İş Emirleri Yönetimi</h1>
-            <p class="text-sm text-slate-400 mt-1">Sahadan gelen tüm iş emirlerini ve atama durumlarını buradan yönetin.
-            </p>
-          </div>
-
-          <div class="flex gap-3">
-
-            <button (click)="refreshData()" [disabled]="isRefreshing()" type="button"
-              class="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-300 hover:text-white text-sm font-semibold rounded-xl border border-slate-700/80 shadow-sm transition-all cursor-pointer">
-              <i-lucide [img]="RefreshCw" class="w-4 h-4 text-blue-400"
-                [class.animate-spin]="isRefreshing()"></i-lucide>
-              {{ isRefreshing() ? 'Yenileniyor...' : 'Yenile' }}
-            </button>
-
-            <button (click)="openModal()" type="button"
-              class="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-blue-500/20 transition-all cursor-pointer">
-              <i-lucide [img]="Plus" class="w-4 h-4"></i-lucide>
-              Yeni İş Emri
-            </button>
-
-          </div>
-
-          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-md">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
-                <thead>
-                  <tr
-                    class="border-b border-slate-800 bg-slate-950/40 text-xs uppercase tracking-wider text-slate-400 font-semibold">
-                    <th class="py-4 px-6"># ID</th>
-                    <th class="py-4 px-6">Başlık / Sorun</th>
-                    <th class="py-4 px-6">Müşteri</th>
-                    <th class="py-4 px-6">Atanan Teknisyen</th>
-                    <th class="py-4 px-6">Konum</th>
-                    <th class="py-4 px-6">Tarih</th>
-                    <th class="py-4 px-6">Durum</th>
-                    <th class="py-4 px-6 text-right">İşlemler</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-800/60 text-sm font-medium text-slate-300">
-                  @for (order of workOrders(); track order.id) {
-                  <tr class="hover:bg-slate-800/40 transition-colors group">
-                    <td class="py-4 px-6 font-mono text-blue-400 font-bold">#{{ order.id }}</td>
-                    <td class="py-4 px-6 text-white font-semibold">{{ order.title }}</td>
-                    <td class="py-4 px-6 text-slate-300">{{ order.customerName }}</td>
-                    <td class="py-4 px-6">
-                      <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-                        <i-lucide [img]="Users" class="w-3 h-3 text-blue-400"></i-lucide>
-                        {{ order.technicianName }}
-                      </span>
-                    </td>
-                    <td class="py-4 px-6 text-slate-400 text-xs">{{ order.location }}</td>
-                    <td class="py-4 px-6 text-slate-400 text-xs font-mono">{{ order.scheduledDate }}</td>
-                    <td class="py-4 px-6">
-                      @if (order.status === 1) {
-                      <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-                        Beklemede
-                      </span>
-                      } @else if (order.status === 2) {
-                      <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                        İşlemde
-                      </span>
-                      } @else if (order.status === 3) {
-                      <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        Tamamlandı
-                      </span>
-                      } @else {
-                      <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20">
-                        Durum: {{ order.status }}
-                      </span>
-                      }
-                    </td>
-                    <td class="px-4 py-3 text-right">
-                      <div class="flex items-center justify-end gap-2">
-
-                        <button (click)="openDetailModal(order)" type="button"
-                          class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-blue-400 transition-colors cursor-pointer"
-                          title="Görüntüle / Detaylar">
-                          <i-lucide [img]="Eye" class="w-4 h-4"></i-lucide>
-                        </button>
-
-                        <button (click)="openEditModal(order)" type="button"
-                          class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
-                          title="Düzenle">
-                          <i-lucide [img]="Edit3" class="w-4 h-4"></i-lucide>
-                        </button>
-
-                        <button (click)="deleteOrder(order.id)" type="button"
-                          class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
-                          title="Sil">
-                          <i-lucide [img]="Trash2" class="w-4 h-4"></i-lucide>
-                        </button>
-
-                      </div>
-                    </td>
-                  </tr>
-                  }
-                </tbody>
-              </table>
-
-              @if (workOrders().length === 0) {
-              <div class="text-center py-16">
-                <i-lucide [img]="ClipboardList" class="w-12 h-12 text-slate-600 mx-auto mb-3 animate-bounce"></i-lucide>
-                <h3 class="text-base font-semibold text-slate-300">Henüz Kayıtlı İş Emri Yok</h3>
-                <p class="text-xs text-slate-500 mt-1">Backend veritabanınızda hiç iş emri kaydı bulunamadı veya
-                  yükleniyor.</p>
-              </div>
-              }
-
-            </div>
-          </div>
-        </div>
-      </div> }
+   @if (page() === 'workorders') {
+  <div class="flex flex-col gap-6 animate-fade-in w-full">
     
-    <!-- YENİ İŞ EMRİ EKLEME MODALI -->
-    </main>
-  </div>
-  @if (isModalOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
-    <div
-      class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-
-      <div class="flex justify-between items-center p-5 border-b border-slate-800 bg-slate-950/50 shrink-0">
-        <h3 class="text-base font-bold text-white">
-          {{ editingOrderId() ? ('#' + editingOrderId() + ' Numaralı İş Emrini Düzenle') : 'Yeni İş Emri Oluştur' }}
-        </h3>
-        <button (click)="closeModal()" type="button"
-          class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors font-bold cursor-pointer">✕</button>
+    <div class="flex justify-between items-center bg-slate-900/60 border border-slate-800 p-6 rounded-2xl backdrop-blur-md w-full">
+      
+      <div>
+        <h1 class="text-2xl font-bold text-white tracking-wide">İş Emirleri Yönetimi</h1>
+        <p class="text-sm text-slate-400 mt-1">Sahadan gelen tüm iş emirlerini ve atama durumlarını buradan yönetin.</p>
       </div>
 
-      <div class="p-6 flex flex-col gap-4 overflow-y-auto grow text-sm">
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">İş Emri Başlığı /
-            Sorun</label>
-          <input [value]="newOrderForm().title" (input)="updateForm('title', $event)" type="text"
-            placeholder="Örn: Kombi Su Akıtıyor, Klima Bakımı..."
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors">
-        </div>
+      <div class="flex gap-3">
+        <button (click)="refreshData()" [disabled]="isRefreshing()"
+          class="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-300 hover:text-white text-sm font-semibold rounded-xl border border-slate-700/80 shadow-sm transition-all cursor-pointer">
+          <i-lucide [img]="RefreshCw" class="w-4 h-4 text-blue-400" [class.animate-spin]="isRefreshing()"></i-lucide>
+          {{ isRefreshing() ? 'Yenileniyor...' : 'Yenile' }}
+        </button>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Müşteri ID</label>
-            <input [value]="newOrderForm().customerId" (input)="updateForm('customerId', $event)" type="number" min="1"
-              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors font-mono">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Durum
-              (Statü)</label>
-            <select [value]="newOrderForm().status" (change)="updateForm('status', $event)"
-              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
-              <option value="1">1 - Bekliyor / Açık</option>
-              <option value="2">2 - Devam Ediyor / Atandı</option>
-              <option value="3">3 - Tamamlandı</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Detaylı
-            Açıklama</label>
-          <textarea [value]="newOrderForm().description" (input)="updateForm('description', $event)" rows="3"
-            placeholder="Sahadaki teknisyen için arıza veya yapılacak işlem detaylarını yazın..."
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none"></textarea>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2.5 p-4 border-t border-slate-800 bg-slate-950 shrink-0">
-        <button (click)="closeModal()" type="button"
-          class="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all text-xs font-semibold cursor-pointer">Vazgeç</button>
-        <button (click)="submitNewOrder()" type="button"
-          class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs shadow-lg shadow-blue-500/20 transition-all cursor-pointer">
-          {{ editingOrderId() ? 'Değişiklikleri Güncelle' : 'Kaydet ve Oluştur' }}
+        <button (click)="openModal()" type="button"
+          class="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-500/20 transition-all cursor-pointer">
+          <i-lucide [img]="Plus" class="w-4 h-4"></i-lucide>
+          Yeni İş Emri
         </button>
       </div>
 
     </div>
-  </div>
-  }
 
 
-  @if (selectedWorkOrder()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
-    <div
-      class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-
-      <div class="flex justify-between items-center p-5 border-b border-slate-800 bg-slate-950/50 shrink-0">
-        <div class="flex items-center gap-2.5">
-          <span
-            class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
-            #{{ selectedWorkOrder().id }}
-          </span>
-          <h3 class="text-base font-bold text-white truncate max-w-[280px]">
-            {{ selectedWorkOrder().title }}
-          </h3>
-        </div>
-        <button (click)="closeDetailModal()" type="button"
-          class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors text-base font-bold cursor-pointer">✕</button>
       </div>
 
-      <div class="p-6 flex flex-col gap-5 overflow-y-auto grow text-sm">
-        <div class="flex items-center justify-between p-3.5 bg-slate-950 rounded-xl border border-slate-800/80">
-          <div>
-            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">Mevcut
-              Statü</span>
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="{
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-md">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr
+                class="border-b border-slate-800 bg-slate-950/40 text-xs uppercase tracking-wider text-slate-400 font-semibold">
+                <th class="py-4 px-6"># ID</th>
+                <th class="py-4 px-6">Başlık / Sorun</th>
+                <th class="py-4 px-6">Müşteri</th>
+                <th class="py-4 px-6">Atanan Teknisyen</th>
+                <th class="py-4 px-6">Konum</th>
+                <th class="py-4 px-6">Tarih</th>
+                <th class="py-4 px-6">Durum</th>
+                <th class="py-4 px-6 text-right">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-sm font-medium text-slate-300">
+              @for (order of workOrders(); track order.id) {
+              <tr class="hover:bg-slate-800/40 transition-colors group">
+                <td class="py-4 px-6 font-mono text-blue-400 font-bold">#{{ order.id }}</td>
+                <td class="py-4 px-6 text-white font-semibold">{{ order.title }}</td>
+                <td class="py-4 px-6 text-slate-300">{{ order.customerName }}</td>
+                <td class="py-4 px-6">
+                  <span
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                    <i-lucide [img]="Users" class="w-3 h-3 text-blue-400"></i-lucide>
+                    {{ order.technicianName }}
+                  </span>
+                </td>
+                <td class="py-4 px-6 text-slate-400 text-xs">{{ order.location }}</td>
+                <td class="py-4 px-6 text-slate-400 text-xs font-mono">{{ order.scheduledDate }}</td>
+                <td class="py-4 px-6">
+                  @if (order.status === 1) {
+                  <span
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                    Beklemede
+                  </span>
+                  } @else if (order.status === 2) {
+                  <span
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                    İşlemde
+                  </span>
+                  } @else if (order.status === 3) {
+                  <span
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    Tamamlandı
+                  </span>
+                  } @else {
+                  <span
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                    Durum: {{ order.status }}
+                  </span>
+                  }
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <div class="flex items-center justify-end gap-2">
+
+                    <button (click)="openDetailModal(order)" type="button"
+                      class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-blue-400 transition-colors cursor-pointer"
+                      title="Görüntüle / Detaylar">
+                      <i-lucide [img]="Eye" class="w-4 h-4"></i-lucide>
+                    </button>
+
+                    <button (click)="openEditModal(order)" type="button"
+                      class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
+                      title="Düzenle">
+                      <i-lucide [img]="Edit3" class="w-4 h-4"></i-lucide>
+                    </button>
+
+                    <button (click)="deleteOrder(order.id)" type="button"
+                      class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
+                      title="Sil">
+                      <i-lucide [img]="Trash2" class="w-4 h-4"></i-lucide>
+                    </button>
+
+                  </div>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+
+          @if (workOrders().length === 0) {
+          <div class="text-center py-16">
+            <i-lucide [img]="ClipboardList" class="w-12 h-12 text-slate-600 mx-auto mb-3 animate-bounce"></i-lucide>
+            <h3 class="text-base font-semibold text-slate-300">Henüz Kayıtlı İş Emri Yok</h3>
+            <p class="text-xs text-slate-500 mt-1">Backend veritabanınızda hiç iş emri kaydı bulunamadı veya
+              yükleniyor.</p>
+          </div>
+          }
+
+        </div>
+      </div>
+  </div>
+</div>
+}
+
+<!-- YENİ İŞ EMRİ EKLEME MODALI -->
+</main>
+
+@if (isModalOpen()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
+  <div
+    class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+
+    <div class="flex justify-between items-center p-5 border-b border-slate-800 bg-slate-950/50 shrink-0">
+      <h3 class="text-base font-bold text-white">
+        {{ editingOrderId() ? ('#' + editingOrderId() + ' Numaralı İş Emrini Düzenle') : 'Yeni İş Emri Oluştur' }}
+      </h3>
+      <button (click)="closeModal()" type="button"
+        class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors font-bold cursor-pointer">✕</button>
+    </div>
+
+    <div class="p-6 flex flex-col gap-4 overflow-y-auto grow text-sm">
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">İş Emri Başlığı /
+          Sorun</label>
+        <input [value]="newOrderForm().title" (input)="updateForm('title', $event)" type="text"
+          placeholder="Örn: Kombi Su Akıtıyor, Klima Bakımı..."
+          class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Müşteri ID</label>
+          <input [value]="newOrderForm().customerId" (input)="updateForm('customerId', $event)" type="number" min="1"
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Durum
+            (Statü)</label>
+          <select [value]="newOrderForm().status" (change)="updateForm('status', $event)"
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
+            <option value="1">1 - Bekliyor / Açık</option>
+            <option value="2">2 - Devam Ediyor / Atandı</option>
+            <option value="3">3 - Tamamlandı</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Detaylı
+          Açıklama</label>
+        <textarea [value]="newOrderForm().description" (input)="updateForm('description', $event)" rows="3"
+          placeholder="Sahadaki teknisyen için arıza veya yapılacak işlem detaylarını yazın..."
+          class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none"></textarea>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2.5 p-4 border-t border-slate-800 bg-slate-950 shrink-0">
+      <button (click)="closeModal()" type="button"
+        class="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all text-xs font-semibold cursor-pointer">Vazgeç</button>
+      <button (click)="submitNewOrder()" type="button"
+        class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs shadow-lg shadow-blue-500/20 transition-all cursor-pointer">
+        {{ editingOrderId() ? 'Değişiklikleri Güncelle' : 'Kaydet ve Oluştur' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+}
+
+
+@if (selectedWorkOrder()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
+  <div
+    class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+
+    <div class="flex justify-between items-center p-5 border-b border-slate-800 bg-slate-950/50 shrink-0">
+      <div class="flex items-center gap-2.5">
+        <span
+          class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
+          #{{ selectedWorkOrder().id }}
+        </span>
+        <h3 class="text-base font-bold text-white truncate max-w-[280px]">
+          {{ selectedWorkOrder().title }}
+        </h3>
+      </div>
+      <button (click)="closeDetailModal()" type="button"
+        class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors text-base font-bold cursor-pointer">✕</button>
+    </div>
+
+    <div class="p-6 flex flex-col gap-5 overflow-y-auto grow text-sm">
+      <div class="flex items-center justify-between p-3.5 bg-slate-950 rounded-xl border border-slate-800/80">
+        <div>
+          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">Mevcut
+            Statü</span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="{
                     'bg-amber-500/10 text-amber-400 border border-amber-500/20': selectedWorkOrder().status === 1 || selectedWorkOrder().status === '1',
                     'bg-blue-500/10 text-blue-400 border border-blue-500/20': selectedWorkOrder().status === 2 || selectedWorkOrder().status === '2',
                     'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20': selectedWorkOrder().status === 3 || selectedWorkOrder().status === '3'
                   }">
-              <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-              {{ selectedWorkOrder().status === 1 ? 'Bekliyor / Açık' : (selectedWorkOrder().status === 2 ? 'Devam
-              Ediyor / Atandı' : 'Tamamlandı') }}
-            </span>
-          </div>
-          <div class="text-right">
-            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">Oluşturulma
-              Tarihi</span>
-            <span class="text-slate-300 font-mono text-xs">{{ selectedWorkOrder().scheduledDate || 'Tarih Belirtilmemiş'
-              }}</span>
-          </div>
+            <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+            {{ selectedWorkOrder().status === 1 ? 'Bekliyor / Açık' : (selectedWorkOrder().status === 2 ? 'Devam
+            Ediyor / Atandı' : 'Tamamlandı') }}
+          </span>
         </div>
-
-        <div>
-          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <i-lucide [img]="ClipboardList" class="w-3.5 h-3.5 text-blue-400"></i-lucide>
-            Sorun Tanımı & Detaylar
-          </h4>
-          <div
-            class="p-4 bg-slate-950/60 rounded-xl border border-slate-800/60 text-slate-300 leading-relaxed min-h-[80px] whitespace-pre-wrap">
-            {{ selectedWorkOrder().description || 'Bu iş emri için detaylı bir açıklama girilmemiş.' }}
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800/80">
-            <span
-              class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1 flex items-center gap-1">
-              <i-lucide [img]="MapPin" class="w-3 h-3 text-slate-400"></i-lucide> Müşteri Bilgisi
-            </span>
-            <span class="text-white font-medium block truncate">{{ selectedWorkOrder().customerName || ('Müşteri #' +
-              selectedWorkOrder().customerId) }}</span>
-            <span class="text-[11px] text-slate-400 mt-0.5 block">Konum: {{ selectedWorkOrder().location || 'Merkez
-              Ofis' }}</span>
-          </div>
-
-          <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800/80">
-            <span
-              class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1 flex items-center gap-1">
-              <i-lucide [img]="Wrench" class="w-3 h-3 text-slate-400"></i-lucide> Atanan Teknisyen
-            </span>
-            <span class="text-white font-medium block truncate"
-              [class.text-amber-400]="!selectedWorkOrder().technicianId || selectedWorkOrder().technicianName?.includes('Atanmadı')">
-              {{ selectedWorkOrder().technicianName || 'Henüz Atanmadı' }}
-            </span>
-            <span class="text-[11px] text-slate-500 mt-0.5 block">Saha Operasyon Ekibi</span>
-          </div>
+        <div class="text-right">
+          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">Oluşturulma
+            Tarihi</span>
+          <span class="text-slate-300 font-mono text-xs">{{ selectedWorkOrder().scheduledDate || 'Tarih Belirtilmemiş'
+            }}</span>
         </div>
       </div>
 
-      <div class="flex justify-between items-center p-4 border-t border-slate-800 bg-slate-950 shrink-0">
-        <button (click)="closeDetailModal(); openEditModal(selectedWorkOrder())" type="button"
-          class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 text-xs font-semibold rounded-xl transition-all cursor-pointer border border-slate-700/50">
-          <i-lucide [img]="Edit3" class="w-3.5 h-3.5"></i-lucide>
-          Düzenle / Statü Güncelle
-        </button>
-        <button (click)="closeDetailModal()" type="button"
-          class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all cursor-pointer">
-          Kapat
-        </button>
+      <div>
+        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <i-lucide [img]="ClipboardList" class="w-3.5 h-3.5 text-blue-400"></i-lucide>
+          Sorun Tanımı & Detaylar
+        </h4>
+        <div
+          class="p-4 bg-slate-950/60 rounded-xl border border-slate-800/60 text-slate-300 leading-relaxed min-h-[80px] whitespace-pre-wrap">
+          {{ selectedWorkOrder().description || 'Bu iş emri için detaylı bir açıklama girilmemiş.' }}
+        </div>
       </div>
 
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800/80">
+          <span
+            class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1 flex items-center gap-1">
+            <i-lucide [img]="MapPin" class="w-3 h-3 text-slate-400"></i-lucide> Müşteri Bilgisi
+          </span>
+          <span class="text-white font-medium block truncate">{{ selectedWorkOrder().customerName || ('Müşteri #' +
+            selectedWorkOrder().customerId) }}</span>
+          <span class="text-[11px] text-slate-400 mt-0.5 block">Konum: {{ selectedWorkOrder().location || 'Merkez
+            Ofis' }}</span>
+        </div>
+
+        <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800/80">
+          <span
+            class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1 flex items-center gap-1">
+            <i-lucide [img]="Wrench" class="w-3 h-3 text-slate-400"></i-lucide> Atanan Teknisyen
+          </span>
+          <span class="text-white font-medium block truncate"
+            [class.text-amber-400]="!selectedWorkOrder().technicianId || selectedWorkOrder().technicianName?.includes('Atanmadı')">
+            {{ selectedWorkOrder().technicianName || 'Henüz Atanmadı' }}
+          </span>
+          <span class="text-[11px] text-slate-500 mt-0.5 block">Saha Operasyon Ekibi</span>
+        </div>
+      </div>
     </div>
+
+    <div class="flex justify-between items-center p-4 border-t border-slate-800 bg-slate-950 shrink-0">
+      <button (click)="closeDetailModal(); openEditModal(selectedWorkOrder())" type="button"
+        class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 text-xs font-semibold rounded-xl transition-all cursor-pointer border border-slate-700/50">
+        <i-lucide [img]="Edit3" class="w-3.5 h-3.5"></i-lucide>
+        Düzenle / Statü Güncelle
+      </button>
+      <button (click)="closeDetailModal()" type="button"
+        class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all cursor-pointer">
+        Kapat
+      </button>
+    </div>
+
   </div>
-  }
+</div>
+}
