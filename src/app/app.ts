@@ -3,15 +3,16 @@ import { CommonModule } from '@angular/common';
 import { DashboardService } from './dashboard';
 import { TechnicianListComponent } from './technicians/technician-list.component';
 import { CustomerListComponent } from './customers/customer-list.component';
+import { InventoryListComponent } from './features/inventories/inventory-list.component';
 import { 
   LucideAngularModule, LayoutDashboard, Users, Wrench, ClipboardList, 
   Bell, Search, TrendingUp, TrendingDown, MapPin, Clock, CheckCircle2, 
   AlertCircle, Plus, Filter, Download, RefreshCw, Wifi, Activity, 
-  Star, Phone, Mail, Menu, X, Zap, Settings, LogOut, Eye, Edit3, Trash2, UserCheck 
+  Star, Phone, Mail, Menu, X, Zap, Settings, LogOut, Eye, Edit3, Trash2, UserCheck, Package 
 } from 'lucide-angular';
 
 // Sayfa yönlendirmeleri için tip tanımı
-type Page = "dashboard" | "workorders" | "technicians" | "customers" | "settings";
+type Page = "dashboard" | "workorders" | "technicians" | "customers" | "inventories" | "settings";
 
 // Bildirimler için tip tanımı
 export interface NotificationItem {
@@ -24,7 +25,7 @@ export interface NotificationItem {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TechnicianListComponent, CustomerListComponent],
+  imports: [CommonModule, LucideAngularModule, TechnicianListComponent, CustomerListComponent, InventoryListComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -62,6 +63,7 @@ export class App implements OnInit {
   readonly Edit3 = Edit3;
   readonly Trash2 = Trash2;
   readonly UserCheck = UserCheck;
+  readonly Package = Package;
 
   // --- REAKTİF STATE YÖNETİMİ (SIGNALS) ---
   page = signal<Page>("dashboard");
