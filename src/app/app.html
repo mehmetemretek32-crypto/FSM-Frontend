@@ -59,6 +59,13 @@
         Teknisyenler
       </button>
 
+      <button (click)="page.set('planning'); sidebarOpen.set(false)"
+        [class]="page() === 'planning' ? 'bg-blue-600/20 text-blue-300 border border-blue-500/20' : 'text-slate-400 hover:text-white hover:bg-white/[0.05] border border-transparent'"
+        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200">
+        <lucide-icon [name]="Calendar" [size]="16" [class.text-blue-400]="page() === 'planning'"></lucide-icon>
+        Planlama
+</button>
+
       <button (click)="page.set('customers'); sidebarOpen.set(false)"
         [class]="page() === 'customers' ? 'bg-blue-600/20 text-blue-300 border border-blue-500/20' : 'text-slate-400 hover:text-white hover:bg-white/[0.05] border border-transparent'"
         class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200">
@@ -472,6 +479,10 @@
 
 @if (page() === 'technicians') {
 <app-technician-list></app-technician-list>
+}
+
+@if (page() === 'planning') {
+    <app-planning></app-planning>
 }
 
 @if (page() === 'customers') {

@@ -1,0 +1,37 @@
+<div class="planning-dashboard flex gap-6 p-6 bg-slate-100 min-h-screen font-sans">
+  
+  <div class="sidebar w-80 flex-shrink-0 flex flex-col bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden" id="external-events">
+    <div class="p-5 border-b border-slate-100 bg-slate-50">
+      <h3 class="font-extrabold text-xl text-slate-800 flex items-center gap-2">
+        <span>📋</span> Bekleyen İşler
+      </h3>
+      <p class="text-sm text-slate-500 mt-1 font-medium">Atamak için takvime sürükleyin</p>
+    </div>
+    
+    <div class="p-4 flex-1 overflow-y-auto space-y-3 custom-scrollbar">
+      @for (isEmri of bekleyenIsler; track isEmri.id) {
+        <div class="fc-event group flex items-center p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-500 hover:ring-1 hover:ring-blue-500 transition-all cursor-grab" [attr.data-id]="isEmri.id">
+          <div class="bg-blue-50 text-blue-700 rounded-full w-10 h-10 flex flex-shrink-0 items-center justify-center font-bold mr-3 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+            {{ isEmri.id }}
+          </div>
+          <div class="overflow-hidden">
+            <p class="font-bold text-slate-800 text-sm truncate">{{ isEmri.title }}</p>
+            <p class="text-xs text-slate-500 mt-0.5 font-semibold flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400 shadow-sm"></span> Bekliyor
+            </p>
+          </div>
+        </div>
+      } @empty {
+        <div class="flex flex-col items-center justify-center h-32 text-center p-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50">
+          <span class="text-2xl mb-2">✨</span>
+          <p class="text-sm text-slate-600 font-bold">Tüm işler planlandı!</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="calendar-wrapper flex-1 bg-white p-5 rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-3rem)]">
+    <full-calendar [options]="calendarOptions" class="flex-1 w-full h-full"></full-calendar>
+  </div>
+
+</div>
