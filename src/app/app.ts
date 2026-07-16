@@ -67,7 +67,7 @@ export class App implements OnInit {
   readonly UserCheck = UserCheck;
   readonly Package = Package;
 
-  // --- REAKTİF STATE YÖNETİMİ (SIGNALS) ---
+ // --- REAKTİF STATE YÖNETİMİ (SIGNALS) ---
   page = signal<Page>("dashboard");
   sidebarOpen = signal(false);
   notifOpen = signal(false);
@@ -78,18 +78,16 @@ export class App implements OnInit {
   pendingAssignments = signal(0);
   completedJobs = signal(0);
 
-  // İş Emri Listemiz (Backend'den gelen o harika JSON buraya dolacak)
+  // İş Emri Listemiz (Backend'den gelen JSON buraya dolacak)
   workOrders = signal<any[]>([]);
 
-  // Canlı Bildirim Listemiz
-  notifications = signal<NotificationItem[]>([
-    { id: 1, type: "critical", message: "Acil iş emri: WO-2402 atanmayı bekliyor", time: "2 dk önce" },
-    { id: 2, type: "success", message: "WO-2403 tamamlandı — Fatma Demir", time: "18 dk önce" },
-    { id: 3, type: "info", message: "Teknisyen Ahmet Yılmaz konum güncelledi", time: "35 dk önce" },
-    { id: 4, type: "warning", message: "WO-2408 yaklaşık 30 dk gecikmeli", time: "1 sa önce" }
-  ]);
+  // 1. GERÇEK BİLDİRİMLER (İçindeki sahte mesajları sildik, boş kutu yaptık)
+  notifications = signal<any[]>([]);
 
-  // Durum Dağılımı (Pie Chart) Verisi
+  // 2. GERÇEK TEKNİSYENLER (Eski sahte "techPerformance" listesini sildik, bunu koyduk)
+  technicians = signal<any[]>([]);
+
+  // Durum Dağılımı (Pie Chart) - Buraya DOKUNMUYORUZ, canlı sayılardan otomatik hesaplıyor
   pieData = computed(() => {
     const total = this.totalWorkOrders() || 1;
     const completed = this.completedJobs();
@@ -104,7 +102,7 @@ export class App implements OnInit {
     ];
   });
 
-  // Trend Grafikleri için Örnek Veriler
+  // Trend Grafikleri - Backend'de grafikle ilgili bir tablomuz olmadığı için bu şimdilik görsel olarak kalabilir.
   trendData = [
     { month: "Ağu", orders: 52, completed: 48 },
     { month: "Eyl", orders: 61, completed: 55 },
@@ -113,18 +111,12 @@ export class App implements OnInit {
     { month: "Ara", orders: 84, completed: 77 },
     { month: "Oca", orders: 93, completed: 86 },
   ];
+ 
 
-  techPerformance = [
-    { name: "Ahmet Y.", jobs: 28 },
-    { name: "Mehmet K.", jobs: 21 },
-    { name: "Fatma D.", jobs: 35 },
-    { name: "Ali Ç.", jobs: 19 },
-    { name: "Zeynep A.", jobs: 12 },
-  ];
-
-  ngOnInit() {
+ngOnInit() {
     this.loadRealData();
     this.loadWorkOrders();
+    this.loadTechnicians(); // SADECE BU SATIRI EKLEDİK
   }
 
   // Backend API'mizden Sayıları Çeken Fonksiyon
@@ -155,6 +147,16 @@ export class App implements OnInit {
       }
     });
   }
+  // Backend'den Gerçek Teknisyenleri Çeken Metot
+  loadTechnicians() {
+    this.dashboardService.getTechnicians().subscribe({
+      next: (data: any) => {
+        console.log("👷 Gerçek Teknisyenler Geldi:", data);
+        this.technicians.set(data);
+      },
+      error: (err: any) => console.error("Teknisyenler çekilemedi:", err)
+    });
+  }
 
   // Canlı SignalR Simülasyonu
   simulateSignalR() {
@@ -176,11 +178,12 @@ export class App implements OnInit {
   isModalOpen = signal<boolean>(false);
   editingOrderId = signal<number | null>(null);
 
-  newOrderForm = signal({
+  newOrderForm = signal<any>({
     title: '',
     customerId: 1, 
     description: '',
-    status: 'Açık'
+    status: '1',
+    technicianId: '' // YENİ EKLENDİ
   });
 
   openModal() {
@@ -231,21 +234,34 @@ export class App implements OnInit {
         id: currentEditId,
         title: formValue.title,
         description: formValue.description,
-        status: Number(formValue.status) || 1
+        status: Number(formValue.status) || 1,
+        technicianId: formValue.technicianId ? Number(formValue.technicianId) : null 
       };
 
-      this.dashboardService.updateWorkOrder(currentEditId, updatePayload).subscribe({
-        next: () => {
-          console.log(`✅ #${currentEditId} başarıyla güncellendi!`);
-          this.closeModal();
-          this.loadWorkOrders(); // Tabloyu anında yenile!
+      // DİKKAT: C# kodun URL'de ID beklemediği için adresi dümdüz yazıyoruz!
+      // Eğer adreste hala /3 gibi bir şey giderse C# kapıyı açmaz (405 verir).
+      // 👇 SADECE BU KISMI DEĞİŞTİRİYORUZ 👇
+      // 👇 ANGULAR HTTP YERİNE %100 ÇALIŞAN NATIVE FETCH API 👇
+      fetch('https://localhost:7190/api/WorkOrders', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
         },
-        error: (err: any) => {
-          console.error('Güncelleme hatası:', err);
-          alert('İş emri güncellenirken bir hata oluştu!');
-        }
+        body: JSON.stringify(updatePayload)
+      })
+      .then((res: any) => {
+        if (!res.ok) throw new Error('Sunucu hatası: ' + res.status);
+        console.log('İş emri başarıyla güncellendi!');
+        this.refreshData(); // Tabloyu yenile
+        this.closeModal();  // Formu kapat
+      })
+      .catch((err: any) => {
+        console.error('Güncelleme hatası detayları:', err);
+        alert('Güncelleme başarısız! Konsola bak.');
       });
-    } 
+        
+      return; // İşlem bitince fonksiyondan çık ki yeni kayıt (POST) kısmına kaymasın
+    }
     // EĞER YENİ EKLEME MODUNDAYSAK (CREATE - POST)
     else {
       this.dashboardService.createWorkOrder(formValue).subscribe({

@@ -48,4 +48,13 @@ export class DashboardService {
   deleteWorkOrder(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/WorkOrders/${id}`);
   }
+  // 6. TEKNİSYENLERİ ÇEKME (GET)
+  getTechnicians(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/Technicians`);
+  }
+
+  // 7. BİLDİRİMLERİ ÇEKME (GET) - Eğer backend'de böyle bir endpoint'in varsa!
+  getNotifications(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/Notifications`); 
+  }
 }
