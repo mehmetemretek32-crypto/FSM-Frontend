@@ -1,4 +1,5 @@
-import { Component, signal, inject, OnInit, computed } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, effect } from '@angular/core';
+
 import { CommonModule } from '@angular/common';
 import { DashboardService } from './dashboard';
 import { TechnicianListComponent } from './technicians/technician-list.component';
@@ -11,6 +12,7 @@ import {
   Star, Phone, Mail, Menu, X, Zap, Settings, LogOut, Eye, Edit3, Trash2, UserCheck, Package 
 } from 'lucide-angular';
 import { PlanningComponent } from './pages/planning/planning';
+import { SignalrService } from './services/signalr';
 
 // Sayfa yönlendirmeleri için tip tanımı
 type Page = "dashboard" | "workorders" | "technicians" | "customers" | "planning" | "inventories" | "settings";
@@ -32,6 +34,7 @@ export interface NotificationItem {
 })
 export class App implements OnInit {
   private dashboardService = inject(DashboardService);
+  private signalrService = inject(SignalrService);
 
   // --- İKON TANIMLAMALARI ---
   readonly LayoutDashboard = LayoutDashboard;
@@ -67,7 +70,7 @@ export class App implements OnInit {
   readonly UserCheck = UserCheck;
   readonly Package = Package;
 
- // --- REAKTİF STATE YÖNETİMİ (SIGNALS) ---
+  // --- REAKTİF STATE YÖNETİMİ (SIGNALS) ---
   page = signal<Page>("dashboard");
   sidebarOpen = signal(false);
   notifOpen = signal(false);
@@ -81,13 +84,27 @@ export class App implements OnInit {
   // İş Emri Listemiz (Backend'den gelen JSON buraya dolacak)
   workOrders = signal<any[]>([]);
 
-  // 1. GERÇEK BİLDİRİMLER (İçindeki sahte mesajları sildik, boş kutu yaptık)
+  // 1. GERÇEK BİLDİRİMLER
   notifications = signal<any[]>([]);
 
-  // 2. GERÇEK TEKNİSYENLER (Eski sahte "techPerformance" listesini sildik, bunu koyduk)
+  // 2. GERÇEK TEKNİSYENLER
   technicians = signal<any[]>([]);
 
-  // Durum Dağılımı (Pie Chart) - Buraya DOKUNMUYORUZ, canlı sayılardan otomatik hesaplıyor
+  // --- MODAL VE FORM YÖNETİMİ ---
+  isModalOpen = signal<boolean>(false);
+  editingOrderId = signal<number | null>(null);
+  isRefreshing = signal<boolean>(false);
+  selectedWorkOrder = signal<any | null>(null);
+
+  newOrderForm = signal<any>({
+    title: '',
+    customerId: 1, 
+    description: '',
+    status: '1',
+    technicianId: ''
+  });
+
+  // Durum Dağılımı (Pie Chart) 
   pieData = computed(() => {
     const total = this.totalWorkOrders() || 1;
     const completed = this.completedJobs();
@@ -102,7 +119,7 @@ export class App implements OnInit {
     ];
   });
 
-  // Trend Grafikleri - Backend'de grafikle ilgili bir tablomuz olmadığı için bu şimdilik görsel olarak kalabilir.
+  // Trend Grafikleri 
   trendData = [
     { month: "Ağu", orders: 52, completed: 48 },
     { month: "Eyl", orders: 61, completed: 55 },
@@ -111,12 +128,36 @@ export class App implements OnInit {
     { month: "Ara", orders: 84, completed: 77 },
     { month: "Oca", orders: 93, completed: 86 },
   ];
- 
 
-ngOnInit() {
+  // 👇 DÜZELTİLEN KISIM: SignalR Dinleyicisi 👇
+  constructor() {
+    effect(() => {
+      // Sinyali dinliyoruz: workOrderUpdated() her değiştiğinde burası tetiklenir
+      const updateData = this.signalrService.workOrderUpdated();
+      
+      if (updateData) {
+        console.log('🔔 Backendden canlı sinyal geldi, ekran yenileniyor!', updateData);
+        
+        // Gelen canlı sinyalle sayfayı anında yeniliyoruz!
+        this.refreshData();
+
+        // Gelen mesajı arayüzdeki bildirimler (çan) kutusuna da ekleyelim:
+        const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        const newNotif: NotificationItem = {
+          id: Date.now(),
+          type: 'info',
+          message: typeof updateData === 'string' ? updateData : 'Sistemde yeni bir güncelleme var!',
+          time: now
+        };
+        this.notifications.update(list => [newNotif, ...list]);
+      }
+    }); // Kapanışlar eklendi
+  } // Kapanışlar eklendi
+
+  ngOnInit() {
     this.loadRealData();
     this.loadWorkOrders();
-    this.loadTechnicians(); // SADECE BU SATIRI EKLEDİK
+    this.loadTechnicians();
   }
 
   // Backend API'mizden Sayıları Çeken Fonksiyon
@@ -147,6 +188,7 @@ ngOnInit() {
       }
     });
   }
+
   // Backend'den Gerçek Teknisyenleri Çeken Metot
   loadTechnicians() {
     this.dashboardService.getTechnicians().subscribe({
@@ -158,7 +200,7 @@ ngOnInit() {
     });
   }
 
-  // Canlı SignalR Simülasyonu
+  // Canlı SignalR Simülasyonu (Manuel Test)
   simulateSignalR() {
     this.totalWorkOrders.update(val => val + 1);
     this.pendingAssignments.update(val => val + 1);
@@ -174,20 +216,8 @@ ngOnInit() {
     this.notifications.update(list => [newNotif, ...list]);
   }
 
-  // --- MODAL VE FORM YÖNETİMİ ---
-  isModalOpen = signal<boolean>(false);
-  editingOrderId = signal<number | null>(null);
-
-  newOrderForm = signal<any>({
-    title: '',
-    customerId: 1, 
-    description: '',
-    status: '1',
-    technicianId: '' // YENİ EKLENDİ
-  });
-
   openModal() {
-    this.editingOrderId.set(null); // Yeni ekleme moduna geçtiğimiz için sıfırla
+    this.editingOrderId.set(null);
     this.newOrderForm.set({ title: '', customerId: 1, description: '', status: 'Açık' });
     this.isModalOpen.set(true);
   }
@@ -199,7 +229,8 @@ ngOnInit() {
       title: order.title || '',
       customerId: order.customerId || 1,
       description: order.description || '',
-      status: String(order.status || 1)
+      status: String(order.status || 1),
+      technicianId: order.technicianId || ''
     });
     this.isModalOpen.set(true);
   }
@@ -207,7 +238,7 @@ ngOnInit() {
   closeModal() {
     this.isModalOpen.set(false);
     this.editingOrderId.set(null); 
-    this.newOrderForm.set({ title: '', customerId: 1, description: '', status: 'Açık' });
+    this.newOrderForm.set({ title: '', customerId: 1, description: '', status: 'Açık', technicianId: '' });
   }
 
   updateForm(field: string, event: any) {
@@ -228,21 +259,16 @@ ngOnInit() {
 
     const currentEditId = this.editingOrderId();
 
-    // EĞER DÜZENLEME MODUNDAYSAK (UPDATE - PUT)
     if (currentEditId !== null) {
       const updatePayload = {
         id: currentEditId,
         title: formValue.title,
         description: formValue.description,
-        state: Number(formValue.state) || 1,
+        state: Number(formValue.status) || 1,
         technicianId: formValue.technicianId ? Number(formValue.technicianId) : null,
         customerId: Number(formValue.customerId)
       };
 
-      // DİKKAT: C# kodun URL'de ID beklemediği için adresi dümdüz yazıyoruz!
-      // Eğer adreste hala /3 gibi bir şey giderse C# kapıyı açmaz (405 verir).
-      // 👇 SADECE BU KISMI DEĞİŞTİRİYORUZ 👇
-      // 👇 ANGULAR HTTP YERİNE %100 ÇALIŞAN NATIVE FETCH API 👇
       fetch('https://localhost:7190/api/WorkOrders', {
         method: 'PUT',
         headers: {
@@ -261,15 +287,14 @@ ngOnInit() {
         alert('Güncelleme başarısız! Konsola bak.');
       });
         
-      return; // İşlem bitince fonksiyondan çık ki yeni kayıt (POST) kısmına kaymasın
+      return; 
     }
-    // EĞER YENİ EKLEME MODUNDAYSAK (CREATE - POST)
     else {
       this.dashboardService.createWorkOrder(formValue).subscribe({
         next: (newId: any) => {
           console.log('🎉 Başarıyla eklendi! Yeni ID:', newId);
           this.closeModal();
-          this.loadWorkOrders();
+          this.refreshData(); // Direkt refresh atalım, sayılar da güncellensin
         },
         error: (err: any) => {
           console.error('Ekleme hatası:', err);
@@ -286,7 +311,7 @@ ngOnInit() {
       this.dashboardService.deleteWorkOrder(id).subscribe({
         next: () => {
           console.log(`🚀 #${id} başarıyla silindi!`);
-          this.workOrders.update(list => list.filter(item => item.id !== id));
+          this.refreshData(); // Yerel filtreleme yerine direkt backend'den en taze veriyi çekelim
         },
         error: (err: any) => {
           console.error('Silme hatası:', err);
@@ -295,33 +320,27 @@ ngOnInit() {
       });
     }
   }
-  // 1. Animasyon durumunu kontrol edecek sinyalimiz
-  isRefreshing = signal<boolean>(false);
-   selectedWorkOrder = signal<any | null>(null);
-   openDetailModal(order: any) {
+
+  openDetailModal(order: any) {
     console.log('👁️ Detaylar inceleniyor:', order);
     this.selectedWorkOrder.set(order);
   }
 
-  // Detay modalını kapatan metot
   closeDetailModal() {
     this.selectedWorkOrder.set(null);
   }
-  // 2. Yenileme butonuna basıldığında çalışacak metot
+
   refreshData() {
     console.log("🔄 Tüm veriler ve sayılar canlı olarak yenileniyor...");
-    this.isRefreshing.set(true); // Butonu kilitle ve ikonu döndürmeye başla
+    this.isRefreshing.set(true); 
     
-    // Hem üstteki istatistik kartlarını hem de alttaki tabloyu aynı anda baştan çekiyoruz
     this.loadRealData();
     this.loadWorkOrders();
+    this.loadTechnicians();
 
-    // Veriler çok hızlı gelse bile kullanıcının o şık dönme efektini görebilmesi için 
-    // 600 milisaniye sonra animasyonu durduruyoruz:
     setTimeout(() => {
       this.isRefreshing.set(false);
       console.log("✅ Yenileme tamamlandı!");
     }, 600);
   }
-
-} // <--- SINIF ŞİMDİ EN ALTTA, DOĞRU YERDE KAPANIYOR!
+}
