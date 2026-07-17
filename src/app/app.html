@@ -416,17 +416,17 @@
                   <td class="py-4 px-6 text-slate-400 text-xs">{{ order.location }}</td>
                   <td class="py-4 px-6 text-slate-400 text-xs font-mono">{{ order.scheduledDate }}</td>
                   <td class="py-4 px-6">
-                    @if (order.status === 1) {
+                    @if (order.state === 1) {
                     <span
                       class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
                       <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Beklemede
                     </span>
-                    } @else if (order.status === 2) {
+                    } @else if (order.state === 2) {
                     <span
                       class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
                       <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> İşlemde
                     </span>
-                    } @else if (order.status === 3) {
+                    } @else if (order.state === 3) {
                     <span
                       class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                       <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Tamamlandı
@@ -434,7 +434,7 @@
                     } @else {
                     <span
                       class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20">
-                      Durum: {{ order.status }}
+                      Durum: {{ order.state }}
                     </span>
                     }
                   </td>
@@ -514,7 +514,7 @@
             <div>
               <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Durum
                 (Statü)</label>
-              <select [value]="newOrderForm().status" (change)="updateForm('status', $event)"
+              <select [value]="newOrderForm().state" (change)="updateForm('state', $event)"
                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
                 <option value="1">1 - Bekliyor / Açık</option>
                 <option value="2">2 - Devam Ediyor / Atandı</option>
@@ -524,15 +524,21 @@
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Teknisyen
-              Ataması</label>
-            <select [value]="newOrderForm().technicianId || ''" (change)="updateForm('technicianId', $event)"
-              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
-              <option value="">-- Atanmadı (Bekliyor) --</option>
-              @for (tech of technicians(); track tech.id) {
-              <option [value]="tech.id">{{ tech.fullName }}</option>
-              }
-            </select>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+  Teknisyen Ataması
+</label>
+<select [value]="newOrderForm().technicianId || ''" (change)="updateForm('technicianId', $event)"
+  class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
+  
+  <option value="">-- Atanmadı (Bekliyor) --</option>
+  
+  @for (tech of technicians(); track tech.id) {
+    <!-- Eğer teknisyen müsait değilse (isAvailable false ise) option 'disabled' olur -->
+    <option [value]="tech.id" [disabled]="!tech.isAvailable" [class.text-slate-500]="!tech.isAvailable">
+      {{ tech.fullName }} {{ !tech.isAvailable ? '(Meşgul)' : '' }}
+    </option>
+  }
+</select>
           </div>
 
           <div>
@@ -577,12 +583,12 @@
         <div>
           <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">Mevcut Statü</span>
           <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="{
-                    'bg-amber-500/10 text-amber-400 border border-amber-500/20': selectedWorkOrder().status == 1,
-                    'bg-blue-500/10 text-blue-400 border border-blue-500/20': selectedWorkOrder().status == 2,
-                    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20': selectedWorkOrder().status == 3
+                    'bg-amber-500/10 text-amber-400 border border-amber-500/20': selectedWorkOrder().state == 1,
+                    'bg-blue-500/10 text-blue-400 border border-blue-500/20': selectedWorkOrder().state == 2,
+                    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20': selectedWorkOrder().state == 3
                   }">
             <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-            {{ selectedWorkOrder().status == 1 ? 'Bekliyor / Açık' : (selectedWorkOrder().status == 2 ? 'Devam Ediyor / Atandı' : 'Tamamlandı') }}
+            {{ selectedWorkOrder().state == 1 ? 'Bekliyor / Açık' : (selectedWorkOrder().state == 2 ? 'Devam Ediyor / Atandı' : 'Tamamlandı') }}
           </span>
         </div>
         <div class="text-right">

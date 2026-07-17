@@ -234,8 +234,9 @@ ngOnInit() {
         id: currentEditId,
         title: formValue.title,
         description: formValue.description,
-        status: Number(formValue.status) || 1,
-        technicianId: formValue.technicianId ? Number(formValue.technicianId) : null 
+        state: Number(formValue.state) || 1,
+        technicianId: formValue.technicianId ? Number(formValue.technicianId) : null,
+        customerId: Number(formValue.customerId)
       };
 
       // DİKKAT: C# kodun URL'de ID beklemediği için adresi dümdüz yazıyoruz!
