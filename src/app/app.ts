@@ -305,7 +305,7 @@ export class App implements OnInit {
   }
 
   // --- KAYDET / GÜNCELLE METODU ---
-  submitNewOrder() {
+ submitNewOrder() {
     const formValue = this.newOrderForm();
     if (!formValue.title.trim()) {
       alert('Lütfen iş emri başlığı giriniz!');
@@ -315,45 +315,39 @@ export class App implements OnInit {
     const currentEditId = this.editingOrderId();
 
     if (currentEditId !== null) {
+      // Güncelleme Payload'ı
       const updatePayload = {
         id: currentEditId,
         title: formValue.title,
         description: formValue.description,
-        state: Number(formValue.status) || 1,
+        state: Number(formValue.state) || 1,
         technicianId: formValue.technicianId ? Number(formValue.technicianId) : null,
         customerId: Number(formValue.customerId)
       };
 
-      fetch('https://localhost:7190/api/WorkOrders', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
+      // FETCH YERİNE dashboardService KULLANDIK
+      this.dashboardService.updateWorkOrder(currentEditId, updatePayload).subscribe({
+        next: () => {
+          console.log('İş emri başarıyla güncellendi!');
+          this.refreshData(); // Tabloyu ve istatistikleri yenile
+          this.closeModal();  // Formu kapat
         },
-        body: JSON.stringify(updatePayload)
-      })
-      .then((res: any) => {
-        if (!res.ok) throw new Error('Sunucu hatası: ' + res.status);
-        console.log('İş emri başarıyla güncellendi!');
-        this.refreshData(); // Tabloyu yenile
-        this.closeModal();  // Formu kapat
-      })
-      .catch((err: any) => {
-        console.error('Güncelleme hatası detayları:', err);
-        alert('Güncelleme başarısız! Konsola bak.');
+        error: (err: any) => {
+          console.error('Güncelleme hatası:', err);
+          alert('Güncelleme başarısız! Konsola bak.');
+        }
       });
-        
-      return; 
-    }
-    else {
+    } else {
+      // Yeni Ekleme
       this.dashboardService.createWorkOrder(formValue).subscribe({
         next: (newId: any) => {
           console.log('🎉 Başarıyla eklendi! Yeni ID:', newId);
           this.closeModal();
-          this.refreshData(); // Direkt refresh atalım, sayılar da güncellensin
+          this.refreshData();
         },
         error: (err: any) => {
           console.error('Ekleme hatası:', err);
-          alert('İş emri eklenirken bir hata oluştu! Müşteri ID geçerli mi kontrol edin.');
+          alert('İş emri eklenirken bir hata oluştu!');
         }
       });
     }
