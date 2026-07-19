@@ -16,6 +16,11 @@ export interface UpdateWorkOrderRequest {
   description: string;
   status: number;
 }
+export interface AddMaterialRequest {
+  workOrderId: number;
+  inventoryItemId: number;
+  quantityUsed: number;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -56,5 +61,14 @@ export class DashboardService {
   // 7. BİLDİRİMLERİ ÇEKME (GET) - Eğer backend'de böyle bir endpoint'in varsa!
   getNotifications(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/Notifications`); 
+  }
+
+  // 8. İŞ EMRİNE MALZEME EKLEME VE STOK DÜŞME (POST)
+  addMaterialToWorkOrder(request: AddMaterialRequest): Observable<any> {
+    return this.http.post(`${this.baseUrl}/WorkOrders/add-material`, request);
+  }
+  // 9. ENVANTERLERİ ÇEKME (GET)
+  getInventories(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/Inventories`);
   }
 }

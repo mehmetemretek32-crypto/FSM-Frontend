@@ -80,7 +80,8 @@ export class App implements OnInit {
   activeTechnicians = signal(0);
   pendingAssignments = signal(0);
   completedJobs = signal(0);
-
+// Envanterden çekilen malzemeleri tutacak sinyal
+  inventoryItems = signal<any[]>([]);
   // İş Emri Listemiz (Backend'den gelen JSON buraya dolacak)
   workOrders = signal<any[]>([]);
 
@@ -158,6 +159,7 @@ export class App implements OnInit {
     this.loadRealData();
     this.loadWorkOrders();
     this.loadTechnicians();
+    this.loadInventories();
   }
 
   // Backend API'mizden Sayıları Çeken Fonksiyon
@@ -199,6 +201,59 @@ export class App implements OnInit {
       error: (err: any) => console.error("Teknisyenler çekilemedi:", err)
     });
   }
+
+  loadInventories() {
+    this.dashboardService.getInventories().subscribe({
+      next: (data: any) => {
+        this.inventoryItems.set(data);
+      },
+      error: (err: any) => { 
+        console.error('Envanter listesi çekilemedi:', err);
+      }
+    });
+  }
+  // Arayüzdeki "Ekle" butonuna basıldığında çalışacak ana metot
+  addMaterialToOrder(inventoryItemIdStr: string, quantityStr: string) {
+    const inventoryItemId = parseInt(inventoryItemIdStr, 10);
+    const quantityUsed = parseInt(quantityStr, 10);
+    
+    // HTML'deki modalda düzenlediğimiz iş emrinin ID'sini alıyoruz
+    const workOrderId = this.editingOrderId(); 
+
+    if (!workOrderId) {
+      alert('Hata: İş emri ID bulunamadı!');
+      return;
+    }
+
+    if (!inventoryItemId || !quantityUsed || quantityUsed <= 0) {
+      alert('Lütfen geçerli bir malzeme seçin ve adeti girin!');
+      return;
+    }
+
+    const request = {
+      workOrderId: workOrderId,
+      inventoryItemId: inventoryItemId,
+      quantityUsed: quantityUsed
+    };
+
+    // DashboardService üzerinden backend'e fırlatıyoruz!
+    this.dashboardService.addMaterialToWorkOrder(request).subscribe({
+      next: (res: any) => {
+        alert('Malzeme başarıyla iş emrine eklendi ve stoktan düşüldü!');
+        
+        // İşlem bitince verileri tazeleyip, güncel stokları ekrana yansıtıyoruz
+        // Eğer sayfayı yenilemek için kullandığın metot ismi farklıysa burayı güncelleyebilirsin
+        this.refreshData(); 
+        this.loadInventories(); 
+      },
+      error: (err: any) => {
+        console.error('Malzeme eklenirken hata oluştu:', err);
+        alert('Malzeme eklenirken bir hata oluştu. Lütfen konsolu kontrol edin.');
+      }
+    });
+  }
+ 
+  
 
   // Canlı SignalR Simülasyonu (Manuel Test)
   simulateSignalR() {
