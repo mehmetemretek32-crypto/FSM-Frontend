@@ -14,7 +14,7 @@ export interface UpdateWorkOrderRequest {
   id: number;
   title: string;
   description: string;
-  status: number;
+  state: number;
 }
 export interface AddMaterialRequest {
   workOrderId: number;
