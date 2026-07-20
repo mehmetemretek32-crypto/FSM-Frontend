@@ -106,17 +106,31 @@ export class App implements OnInit {
   });
 
   // Durum Dağılımı (Pie Chart) 
+  // Durum Dağılımı (Pie Chart) - DÜZELTİLMİŞ HALİ
   pieData = computed(() => {
-    const total = this.totalWorkOrders() || 1;
+    const total = this.totalWorkOrders();
     const completed = this.completedJobs();
     const pending = this.pendingAssignments();
-    const inProgress = Math.max(0, total - (completed + pending));
 
+    // Veri yoksa grafiği patlatmamak için sıfırlıyoruz
+    if (total === 0) {
+      return [
+        { name: "Tamamlandı", value: 0, color: "#10b981" },
+        { name: "Devam Ediyor", value: 0, color: "#3b82f6" },
+        { name: "Bekliyor", value: 0, color: "#f59e0b" },
+        { name: "İptal", value: 0, color: "#ef4444" },
+      ];
+    }
+
+    let inProgress = total - (completed + pending);
+    if (inProgress < 0) inProgress = 0; 
+
+    // Bütün '||' sahte verileri ve sabit 5 rakamı temizlendi!
     return [
-      { name: "Tamamlandı", value: Math.round((completed / total) * 100) || 54, color: "#10b981" },
-      { name: "Devam Ediyor", value: Math.round((inProgress / total) * 100) || 23, color: "#3b82f6" },
-      { name: "Bekliyor", value: Math.round((pending / total) * 100) || 18, color: "#f59e0b" },
-      { name: "İptal", value: 5, color: "#ef4444" },
+      { name: "Tamamlandı", value: Math.round((completed / total) * 100), color: "#10b981" },
+      { name: "Devam Ediyor", value: Math.round((inProgress / total) * 100), color: "#3b82f6" },
+      { name: "Bekliyor", value: Math.round((pending / total) * 100), color: "#f59e0b" },
+      { name: "İptal", value: 0, color: "#ef4444" }, 
     ];
   });
 
