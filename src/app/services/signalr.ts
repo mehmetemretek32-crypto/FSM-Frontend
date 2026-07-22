@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -15,9 +16,9 @@ export class SignalrService {
   }
 
   public startConnection = () => {
-    // API adresimiz (önceki ekran görüntülerine göre 7190 portundayız)
+    // API adresimiz artık environment.signalrUrl üzerinden geliyor
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('https://localhost:7190/notificationHub')
+      .withUrl(environment.signalrUrl)
       .withAutomaticReconnect() // Bağlantı koparsa otomatik tekrar dener
       .build();
 

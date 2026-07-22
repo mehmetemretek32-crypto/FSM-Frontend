@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateTechnicianRequest, TechnicianDto } from '../models/technician.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TechnicianService {
   private http = inject(HttpClient);
-  private baseUrl = 'https://localhost:7190/api/Technicians';
+  private baseUrl = `${environment.apiUrl}/Technicians`;
 
   // GET /api/Technicians
   getTechnicians(): Observable<TechnicianDto[]> {
