@@ -13,9 +13,10 @@ import {
 } from 'lucide-angular';
 import { PlanningComponent } from './pages/planning/planning';
 import { SignalrService } from './services/signalr';
-
-// Sayfa yönlendirmeleri için tip tanımı
-type Page = "dashboard" | "workorders" | "technicians" | "customers" | "planning" | "inventories" | "settings";
+import { SettingsComponent } from './pages/settings/settings';// Sayfa yönlendirmeleri için tip tanımı
+import { AuthComponent } from './pages/auth/auth';
+import { AuthService } from './services/auth';
+type Page = "dashboard" | "workorders" | "technicians" | "customers" | "planning" | "inventories" | "settings"| "auth";
 
 // Bildirimler için tip tanımı
 export interface NotificationItem {
@@ -28,13 +29,28 @@ export interface NotificationItem {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TechnicianListComponent, CustomerListComponent, InventoryListComponent, PlanningComponent],
+  imports: [CommonModule, LucideAngularModule, TechnicianListComponent, CustomerListComponent, InventoryListComponent, PlanningComponent,SettingsComponent, AuthComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App implements OnInit {
   private dashboardService = inject(DashboardService);
   private signalrService = inject(SignalrService);
+  private authService = inject(AuthService);
+constructor() {
+    // 1. Oturum kontrolü (Giriş yapıldıysa direkt dashboard'a atar)
+    if (this.authService.isLoggedIn()) {
+      this.page.set('dashboard');
+    }
+
+    // 2. Giriş durumunu reaktif takip eden effect
+    effect(() => {
+      if (this.authService.isLoggedIn()) {
+        this.page.set('dashboard');
+      } else {
+        this.page.set('auth');
+      }
+    });
 
   // --- İKON TANIMLAMALARI ---
   readonly LayoutDashboard = LayoutDashboard;
@@ -71,7 +87,7 @@ export class App implements OnInit {
   readonly Package = Package;
 
   // --- REAKTİF STATE YÖNETİMİ (SIGNALS) ---
-  page = signal<Page>("dashboard");
+  page = signal<Page>("auth");
   sidebarOpen = signal(false);
   notifOpen = signal(false);
 
@@ -145,18 +161,17 @@ export class App implements OnInit {
   ];
 
   // 👇 DÜZELTİLEN KISIM: SignalR Dinleyicisi 👇
-  constructor() {
+
+
+    // 3. SignalR Canlı Bildirim Dinleyicisi (Sildiğini sandığın o kritik kod)
     effect(() => {
-      // Sinyali dinliyoruz: workOrderUpdated() her değiştiğinde burası tetiklenir
       const updateData = this.signalrService.workOrderUpdated();
       
       if (updateData) {
         console.log('🔔 Backendden canlı sinyal geldi, ekran yenileniyor!', updateData);
         
-        // Gelen canlı sinyalle sayfayı anında yeniliyoruz!
         this.refreshData();
 
-        // Gelen mesajı arayüzdeki bildirimler (çan) kutusuna da ekleyelim:
         const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
         const newNotif: NotificationItem = {
           id: Date.now(),
@@ -166,9 +181,8 @@ export class App implements OnInit {
         };
         this.notifications.update(list => [newNotif, ...list]);
       }
-    }); // Kapanışlar eklendi
-  } // Kapanışlar eklendi
-
+    });
+  }
   ngOnInit() {
     this.loadRealData();
     this.loadWorkOrders();
