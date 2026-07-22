@@ -51,6 +51,25 @@ constructor() {
         this.page.set('auth');
       }
     });
+    effect(() => {
+      const updateData = this.signalrService.workOrderUpdated();
+      
+      if (updateData) {
+        console.log('🔔 Backendden canlı sinyal geldi, ekran yenileniyor!', updateData);
+        
+        this.refreshData();
+
+        const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        const newNotif: NotificationItem = {
+          id: Date.now(),
+          type: 'info',
+          message: typeof updateData === 'string' ? updateData : 'Sistemde yeni bir güncelleme var!',
+          time: now
+        };
+        this.notifications.update(list => [newNotif, ...list]);
+      }
+    });
+  }
 
   // --- İKON TANIMLAMALARI ---
   readonly LayoutDashboard = LayoutDashboard;
@@ -164,25 +183,7 @@ constructor() {
 
 
     // 3. SignalR Canlı Bildirim Dinleyicisi (Sildiğini sandığın o kritik kod)
-    effect(() => {
-      const updateData = this.signalrService.workOrderUpdated();
-      
-      if (updateData) {
-        console.log('🔔 Backendden canlı sinyal geldi, ekran yenileniyor!', updateData);
-        
-        this.refreshData();
-
-        const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-        const newNotif: NotificationItem = {
-          id: Date.now(),
-          type: 'info',
-          message: typeof updateData === 'string' ? updateData : 'Sistemde yeni bir güncelleme var!',
-          time: now
-        };
-        this.notifications.update(list => [newNotif, ...list]);
-      }
-    });
-  }
+    
   ngOnInit() {
     this.loadRealData();
     this.loadWorkOrders();
