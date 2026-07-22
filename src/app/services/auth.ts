@@ -1,15 +1,16 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private http = inject(HttpClient);
-  
+
   // .NET API adresin
-  private apiUrl = 'https://localhost:7190/api/Auth'; 
+  private apiUrl = `${environment.apiUrl}/Auth`;
 
   // Giriş durumunu takip eden reaktif sinyal
   isLoggedIn = signal<boolean>(!!localStorage.getItem('token'));

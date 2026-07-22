@@ -5,14 +5,14 @@ import { catchError } from 'rxjs/operators';
 import {
   CreateInventoryRequest, InventoryItem, UpdateInventoryRequest
 } from './inventory.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InventoryService {
   private http = inject(HttpClient);
-  // Diğer modüllerle tutarlı: backend base URL sabit (proje henüz environment.apiUrl kullanmıyor).
-  private baseUrl = 'https://localhost:7190/api/Inventories';
+  private baseUrl = `${environment.apiUrl}/Inventories`;
 
   // GET /api/Inventories
   getInventories(): Observable<InventoryItem[]> {

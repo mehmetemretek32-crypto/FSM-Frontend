@@ -4,6 +4,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-planning',
@@ -63,7 +64,7 @@ export class PlanningComponent implements OnInit, AfterViewInit {
         scheduledEndDate: this.toLocalISO(endDate)
       };
 
-      this.http.put('https://localhost:7190/api/WorkOrders/schedule', payload).subscribe({
+      this.http.put(`${environment.apiUrl}/WorkOrders/schedule`, payload).subscribe({
         next: () => {
           alert('İş başarıyla kaydedildi!');
           this.bekleyenIsler = this.bekleyenIsler.filter(is => is.id.toString() !== workOrderId);
@@ -81,14 +82,14 @@ export class PlanningComponent implements OnInit, AfterViewInit {
       scheduledEndDate: event.end ? this.toLocalISO(event.end) : this.toLocalISO(new Date(event.start.getTime() + 60 * 60 * 1000))
     };
 
-    this.http.put('https://localhost:7190/api/WorkOrders/schedule', payload).subscribe({
+    this.http.put(`${environment.apiUrl}/WorkOrders/schedule`, payload).subscribe({
       next: () => console.log('Takvim içi değişiklik kaydedildi!'),
       error: (err) => alert('Kayıt başarısız oldu.')
     });
   }
 
   ngOnInit(): void {
-    this.http.get<any[]>('https://localhost:7190/api/WorkOrders').subscribe({
+    this.http.get<any[]>(`${environment.apiUrl}/WorkOrders`).subscribe({
       next: (data) => {
         this.bekleyenIsler = data.filter(is => !is.scheduledStartDate);
 

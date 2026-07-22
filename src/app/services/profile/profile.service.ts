@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 // Backend'den beklediğimiz Request nesneleri
 export interface UpdateProfileRequest {
@@ -23,7 +24,7 @@ export class ProfileService {
   private http = inject(HttpClient);
   
   // API URL'in (kendi backend portuna göre ayarla)
-  private apiUrl = 'https://localhost:7190/api/Users';
+  private apiUrl = `${environment.apiUrl}/Users`;
 
   // Profil Güncelleme İsteği
   updateProfile(request: UpdateProfileRequest): Observable<any> {

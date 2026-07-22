@@ -36,7 +36,7 @@ export interface NotificationItem {
 export class App implements OnInit {
   private dashboardService = inject(DashboardService);
   private signalrService = inject(SignalrService);
-  private authService = inject(AuthService);
+  protected authService = inject(AuthService);
 constructor() {
     // 1. Oturum kontrolü (Giriş yapıldıysa direkt dashboard'a atar)
     if (this.authService.isLoggedIn()) {

@@ -1,0 +1,268 @@
+diff --git a/angular.json b/angular.json
+index 49eb51b..9f248ed 100644
+--- a/angular.json
++++ b/angular.json
+@@ -48,7 +48,13 @@
+                   "maximumError": "8kB"
+                 }
+               ],
+-              "outputHashing": "all"
++              "outputHashing": "all",
++              "fileReplacements": [
++                {
++                  "replace": "src/environments/environment.ts",
++                  "with": "src/environments/environment.prod.ts"
++                }
++              ]
+             },
+             "development": {
+               "optimization": false,
+diff --git a/src/app/app.html b/src/app/app.html
+index 00faff1..a59fa8a 100644
+--- a/src/app/app.html
++++ b/src/app/app.html
+@@ -1,5 +1,5 @@
+ @if (page() === 'auth') {
+-  <app-auth (loginSuccess)="page.set('dashboard')"></app-auth>
++  <app-auth></app-auth>
+ } @else {
+   <div class="min-h-screen bg-[#0a0d14] text-slate-100 flex font-sans relative overflow-hidden">
+ 
+@@ -90,16 +90,9 @@
+         </div>
+       </nav>
+       
+-      <button (click)="page.set('settings')" 
+-          [class]="page() === 'settings' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
+-          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors">
+-        <lucide-icon [name]="'Settings'" [size]="16"></lucide-icon>
+-        Ayarlar
+-      </button>
+-
+ 
+       <div class="px-4 py-4 border-t border-white/[0.06]">
+-        <div class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors cursor-pointer">
++        <div (click)="authService.logout()" title="Çıkış Yap" class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors cursor-pointer">
+           <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center text-white text-xs font-bold">
+             AD
+           </div>
+@@ -107,7 +100,7 @@
+             <p class="text-sm font-medium text-white truncate">Admin</p>
+             <p class="text-[11px] text-muted-foreground truncate">admin&#64;fsm.com</p>
+           </div>
+-          <lucide-icon [name]="LogOut" [size]="14" class="text-slate-500"></lucide-icon>
++          <lucide-icon [name]="LogOut" [size]="14" class="text-slate-500 hover:text-red-400"></lucide-icon>
+         </div>
+       </div>
+     </aside>
+diff --git a/src/app/app.ts b/src/app/app.ts
+index da7f3a3..2024fc0 100644
+--- a/src/app/app.ts
++++ b/src/app/app.ts
+@@ -36,7 +36,7 @@ export interface NotificationItem {
+ export class App implements OnInit {
+   private dashboardService = inject(DashboardService);
+   private signalrService = inject(SignalrService);
+-  private authService = inject(AuthService);
++  protected authService = inject(AuthService);
+ constructor() {
+     // 1. Oturum kontrolü (Giriş yapıldıysa direkt dashboard'a atar)
+     if (this.authService.isLoggedIn()) {
+diff --git a/src/app/dashboard.ts b/src/app/dashboard.ts
+index fe8a55e..01b30ab 100644
+--- a/src/app/dashboard.ts
++++ b/src/app/dashboard.ts
+@@ -1,6 +1,7 @@
+ import { Injectable, inject } from '@angular/core';
+ import { HttpClient } from '@angular/common/http';
+ import { Observable } from 'rxjs';
++import { environment } from '../environments/environment';
+ 
+ // DTO İnterfacelerimiz (Sınıfın dışında, en üstte!)
+ export interface CreateWorkOrderRequest {
+@@ -15,6 +16,10 @@ export interface UpdateWorkOrderRequest {
+   title: string;
+   description: string;
+   state: number;
++  technicianId?: number | null;
++  customerId: number;
++  scheduledStartDate?: string | null;
++  scheduledEndDate?: string | null;
+ }
+ export interface AddMaterialRequest {
+   workOrderId: number;
+@@ -27,7 +32,7 @@ export interface AddMaterialRequest {
+ })
+ export class DashboardService {
+   private http = inject(HttpClient);
+-  private baseUrl = 'https://localhost:7190/api';
++  private baseUrl = environment.apiUrl;
+ 
+   // 1. Dashboard İstatistiklerini Çekme
+   getDashboardStats(): Observable<any> {
+diff --git a/src/app/features/inventories/inventory.service.ts b/src/app/features/inventories/inventory.service.ts
+index 04f1afb..c000154 100644
+--- a/src/app/features/inventories/inventory.service.ts
++++ b/src/app/features/inventories/inventory.service.ts
+@@ -5,14 +5,14 @@ import { catchError } from 'rxjs/operators';
+ import {
+   CreateInventoryRequest, InventoryItem, UpdateInventoryRequest
+ } from './inventory.model';
++import { environment } from '../../../environments/environment';
+ 
+ @Injectable({
+   providedIn: 'root'
+ })
+ export class InventoryService {
+   private http = inject(HttpClient);
+-  // Diğer modüllerle tutarlı: backend base URL sabit (proje henüz environment.apiUrl kullanmıyor).
+-  private baseUrl = 'https://localhost:7190/api/Inventories';
++  private baseUrl = `${environment.apiUrl}/Inventories`;
+ 
+   // GET /api/Inventories
+   getInventories(): Observable<InventoryItem[]> {
+diff --git a/src/app/pages/planning/planning.ts b/src/app/pages/planning/planning.ts
+index 9237dd6..9bed591 100644
+--- a/src/app/pages/planning/planning.ts
++++ b/src/app/pages/planning/planning.ts
+@@ -4,6 +4,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
+ import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
+ import { FullCalendarModule } from '@fullcalendar/angular';
+ import { HttpClient, HttpClientModule } from '@angular/common/http';
++import { environment } from '../../../environments/environment';
+ 
+ @Component({
+   selector: 'app-planning',
+@@ -63,7 +64,7 @@ export class PlanningComponent implements OnInit, AfterViewInit {
+         scheduledEndDate: this.toLocalISO(endDate)
+       };
+ 
+-      this.http.put('https://localhost:7190/api/WorkOrders/schedule', payload).subscribe({
++      this.http.put(`${environment.apiUrl}/WorkOrders/schedule`, payload).subscribe({
+         next: () => {
+           alert('İş başarıyla kaydedildi!');
+           this.bekleyenIsler = this.bekleyenIsler.filter(is => is.id.toString() !== workOrderId);
+@@ -81,14 +82,14 @@ export class PlanningComponent implements OnInit, AfterViewInit {
+       scheduledEndDate: event.end ? this.toLocalISO(event.end) : this.toLocalISO(new Date(event.start.getTime() + 60 * 60 * 1000))
+     };
+ 
+-    this.http.put('https://localhost:7190/api/WorkOrders/schedule', payload).subscribe({
++    this.http.put(`${environment.apiUrl}/WorkOrders/schedule`, payload).subscribe({
+       next: () => console.log('Takvim içi değişiklik kaydedildi!'),
+       error: (err) => alert('Kayıt başarısız oldu.')
+     });
+   }
+ 
+   ngOnInit(): void {
+-    this.http.get<any[]>('https://localhost:7190/api/WorkOrders').subscribe({
++    this.http.get<any[]>(`${environment.apiUrl}/WorkOrders`).subscribe({
+       next: (data) => {
+         this.bekleyenIsler = data.filter(is => !is.scheduledStartDate);
+ 
+diff --git a/src/app/services/auth.ts b/src/app/services/auth.ts
+index 5435e94..3d76734 100644
+--- a/src/app/services/auth.ts
++++ b/src/app/services/auth.ts
+@@ -1,15 +1,16 @@
+ import { Injectable, inject, signal } from '@angular/core';
+ import { HttpClient } from '@angular/common/http';
+ import { Observable, tap } from 'rxjs';
++import { environment } from '../../environments/environment';
+ 
+ @Injectable({
+   providedIn: 'root'
+ })
+ export class AuthService {
+   private http = inject(HttpClient);
+-  
++
+   // .NET API adresin
+-  private apiUrl = 'https://localhost:7190/api/Auth'; 
++  private apiUrl = `${environment.apiUrl}/Auth`;
+ 
+   // Giriş durumunu takip eden reaktif sinyal
+   isLoggedIn = signal<boolean>(!!localStorage.getItem('token'));
+diff --git a/src/app/services/customer.service.ts b/src/app/services/customer.service.ts
+index 17c91af..44b3f65 100644
+--- a/src/app/services/customer.service.ts
++++ b/src/app/services/customer.service.ts
+@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
+ import { HttpClient } from '@angular/common/http';
+ import { Observable } from 'rxjs';
+ import { CreateCustomerRequest, CustomerDto, CustomerWorkOrder } from '../models/customer.model';
++import { environment } from '../../environments/environment';
+ 
+ @Injectable({
+   providedIn: 'root'
+ })
+ export class CustomerService {
+   private http = inject(HttpClient);
+-  private baseUrl = 'https://localhost:7190/api/Customers';
++  private baseUrl = `${environment.apiUrl}/Customers`;
+ 
+   // GET /api/Customers
+   getCustomers(): Observable<CustomerDto[]> {
+diff --git a/src/app/services/profile/profile.service.ts b/src/app/services/profile/profile.service.ts
+index c6cc67f..d89ef14 100644
+--- a/src/app/services/profile/profile.service.ts
++++ b/src/app/services/profile/profile.service.ts
+@@ -1,6 +1,7 @@
+ import { Injectable, inject } from '@angular/core';
+ import { HttpClient } from '@angular/common/http';
+ import { Observable } from 'rxjs';
++import { environment } from '../../../environments/environment';
+ 
+ // Backend'den beklediğimiz Request nesneleri
+ export interface UpdateProfileRequest {
+@@ -23,7 +24,7 @@ export class ProfileService {
+   private http = inject(HttpClient);
+   
+   // API URL'in (kendi backend portuna göre ayarla)
+-  private apiUrl = 'https://localhost:7190/api/Users';
++  private apiUrl = `${environment.apiUrl}/Users`;
+ 
+   // Profil Güncelleme İsteği
+   updateProfile(request: UpdateProfileRequest): Observable<any> {
+diff --git a/src/app/services/signalr.ts b/src/app/services/signalr.ts
+index 5d67fc3..43c1655 100644
+--- a/src/app/services/signalr.ts
++++ b/src/app/services/signalr.ts
+@@ -1,5 +1,6 @@
+ import { Injectable, signal } from '@angular/core';
+ import * as signalR from '@microsoft/signalr';
++import { environment } from '../../environments/environment';
+ 
+ @Injectable({
+   providedIn: 'root'
+@@ -15,9 +16,9 @@ export class SignalrService {
+   }
+ 
+   public startConnection = () => {
+-    // API adresimiz (önceki ekran görüntülerine göre 7190 portundayız)
++    // API adresimiz artık environment.signalrUrl üzerinden geliyor
+     this.hubConnection = new signalR.HubConnectionBuilder()
+-      .withUrl('https://localhost:7190/notificationHub')
++      .withUrl(environment.signalrUrl)
+       .withAutomaticReconnect() // Bağlantı koparsa otomatik tekrar dener
+       .build();
+ 
+diff --git a/src/app/services/technician.service.ts b/src/app/services/technician.service.ts
+index d1b4725..71e85d8 100644
+--- a/src/app/services/technician.service.ts
++++ b/src/app/services/technician.service.ts
+@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
+ import { HttpClient, HttpParams } from '@angular/common/http';
+ import { Observable } from 'rxjs';
+ import { CreateTechnicianRequest, TechnicianDto } from '../models/technician.model';
++import { environment } from '../../environments/environment';
+ 
+ @Injectable({
+   providedIn: 'root'
+ })
+ export class TechnicianService {
+   private http = inject(HttpClient);
+-  private baseUrl = 'https://localhost:7190/api/Technicians';
++  private baseUrl = `${environment.apiUrl}/Technicians`;
+ 
+   // GET /api/Technicians
+   getTechnicians(): Observable<TechnicianDto[]> {

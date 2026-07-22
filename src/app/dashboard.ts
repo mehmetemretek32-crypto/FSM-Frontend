@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
 
 // DTO İnterfacelerimiz (Sınıfın dışında, en üstte!)
 export interface CreateWorkOrderRequest {
@@ -15,6 +16,10 @@ export interface UpdateWorkOrderRequest {
   title: string;
   description: string;
   state: number;
+  technicianId?: number | null;
+  customerId: number;
+  scheduledStartDate?: string | null;
+  scheduledEndDate?: string | null;
 }
 export interface AddMaterialRequest {
   workOrderId: number;
@@ -27,7 +32,7 @@ export interface AddMaterialRequest {
 })
 export class DashboardService {
   private http = inject(HttpClient);
-  private baseUrl = 'https://localhost:7190/api';
+  private baseUrl = environment.apiUrl;
 
   // 1. Dashboard İstatistiklerini Çekme
   getDashboardStats(): Observable<any> {

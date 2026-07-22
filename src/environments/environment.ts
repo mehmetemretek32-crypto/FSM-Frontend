@@ -1,0 +1,5 @@
+export const environment = {
+  production: false,
+  apiUrl: 'https://localhost:7190/api',
+  signalrUrl: 'https://localhost:7190/notificationHub'
+};
