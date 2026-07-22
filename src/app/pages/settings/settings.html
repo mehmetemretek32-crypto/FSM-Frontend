@@ -1,0 +1,88 @@
+<div class="min-h-screen bg-[#0f172a] text-white p-6 md:p-10">
+  
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight">Ayarlar</h1>
+    <p class="text-gray-400 mt-2">Hesap bilgilerinizi ve güvenlik tercihlerinizi yönetin.</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    
+    <!-- PROFİL BİLGİLERİ KARTI (Glassmorphism) -->
+    <div class="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl p-6 shadow-2xl">
+      <h2 class="text-xl font-semibold mb-6 flex items-center">
+        <span class="bg-blue-500/20 text-blue-400 p-2 rounded-lg mr-3">👤</span> Profil Bilgileri
+      </h2>
+      
+      <form [formGroup]="profileForm" (ngSubmit)="onProfileSubmit()" class="space-y-5">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-1">Ad</label>
+            <input type="text" formControlName="firstName" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-1">Soyad</label>
+            <input type="text" formControlName="lastName" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">E-posta Adresi</label>
+          <input type="email" formControlName="email" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+        </div>
+
+        <!-- Başarı Mesajı -->
+        @if (profileMessage) {
+          <div class="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 px-4 py-2 rounded-lg text-sm">
+            {{ profileMessage }}
+          </div>
+        }
+
+        <button type="submit" [disabled]="profileForm.invalid" class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition-colors duration-200">
+          Değişiklikleri Kaydet
+        </button>
+      </form>
+    </div>
+
+    <!-- GÜVENLİK VE ŞİFRE KARTI (Glassmorphism) -->
+    <div class="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl p-6 shadow-2xl">
+      <h2 class="text-xl font-semibold mb-6 flex items-center">
+        <span class="bg-orange-500/20 text-orange-400 p-2 rounded-lg mr-3">🔒</span> Güvenlik & Şifre
+      </h2>
+      
+      <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()" class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Mevcut Şifre</label>
+          <input type="password" formControlName="currentPassword" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Yeni Şifre</label>
+          <input type="password" formControlName="newPassword" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition">
+          @if (passwordForm.get('newPassword')?.errors?.['minlength']) {
+            <span class="text-xs text-red-400 mt-1 block">Şifre en az 6 karakter olmalıdır.</span>
+          }
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Yeni Şifre (Tekrar)</label>
+          <input type="password" formControlName="confirmNewPassword" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition">
+          @if (passwordForm.errors?.['mismatch'] && passwordForm.get('confirmNewPassword')?.touched) {
+            <span class="text-xs text-red-400 mt-1 block">Şifreler uyuşmuyor.</span>
+          }
+        </div>
+
+        <!-- Başarı Mesajı -->
+        @if (passwordMessage) {
+          <div class="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 px-4 py-2 rounded-lg text-sm">
+            {{ passwordMessage }}
+          </div>
+        }
+
+        <button type="submit" [disabled]="passwordForm.invalid" class="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition-colors duration-200">
+          Şifreyi Güncelle
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>

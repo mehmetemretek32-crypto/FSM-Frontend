@@ -13,9 +13,10 @@ import {
 } from 'lucide-angular';
 import { PlanningComponent } from './pages/planning/planning';
 import { SignalrService } from './services/signalr';
-
-// Sayfa yönlendirmeleri için tip tanımı
-type Page = "dashboard" | "workorders" | "technicians" | "customers" | "planning" | "inventories" | "settings";
+import { SettingsComponent } from './pages/settings/settings';// Sayfa yönlendirmeleri için tip tanımı
+import { AuthComponent } from './pages/auth/auth';
+import { AuthService } from './services/auth';
+type Page = "dashboard" | "workorders" | "technicians" | "customers" | "planning" | "inventories" | "settings"| "auth";
 
 // Bildirimler için tip tanımı
 export interface NotificationItem {
@@ -28,13 +29,47 @@ export interface NotificationItem {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TechnicianListComponent, CustomerListComponent, InventoryListComponent, PlanningComponent],
+  imports: [CommonModule, LucideAngularModule, TechnicianListComponent, CustomerListComponent, InventoryListComponent, PlanningComponent,SettingsComponent, AuthComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App implements OnInit {
   private dashboardService = inject(DashboardService);
   private signalrService = inject(SignalrService);
+  private authService = inject(AuthService);
+constructor() {
+    // 1. Oturum kontrolü (Giriş yapıldıysa direkt dashboard'a atar)
+    if (this.authService.isLoggedIn()) {
+      this.page.set('dashboard');
+    }
+
+    // 2. Giriş durumunu reaktif takip eden effect
+    effect(() => {
+      if (this.authService.isLoggedIn()) {
+        this.page.set('dashboard');
+      } else {
+        this.page.set('auth');
+      }
+    });
+    effect(() => {
+      const updateData = this.signalrService.workOrderUpdated();
+      
+      if (updateData) {
+        console.log('🔔 Backendden canlı sinyal geldi, ekran yenileniyor!', updateData);
+        
+        this.refreshData();
+
+        const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        const newNotif: NotificationItem = {
+          id: Date.now(),
+          type: 'info',
+          message: typeof updateData === 'string' ? updateData : 'Sistemde yeni bir güncelleme var!',
+          time: now
+        };
+        this.notifications.update(list => [newNotif, ...list]);
+      }
+    });
+  }
 
   // --- İKON TANIMLAMALARI ---
   readonly LayoutDashboard = LayoutDashboard;
@@ -71,7 +106,7 @@ export class App implements OnInit {
   readonly Package = Package;
 
   // --- REAKTİF STATE YÖNETİMİ (SIGNALS) ---
-  page = signal<Page>("dashboard");
+  page = signal<Page>("auth");
   sidebarOpen = signal(false);
   notifOpen = signal(false);
 
@@ -106,17 +141,31 @@ export class App implements OnInit {
   });
 
   // Durum Dağılımı (Pie Chart) 
+  // Durum Dağılımı (Pie Chart) - DÜZELTİLMİŞ HALİ
   pieData = computed(() => {
-    const total = this.totalWorkOrders() || 1;
+    const total = this.totalWorkOrders();
     const completed = this.completedJobs();
     const pending = this.pendingAssignments();
-    const inProgress = Math.max(0, total - (completed + pending));
 
+    // Veri yoksa grafiği patlatmamak için sıfırlıyoruz
+    if (total === 0) {
+      return [
+        { name: "Tamamlandı", value: 0, color: "#10b981" },
+        { name: "Devam Ediyor", value: 0, color: "#3b82f6" },
+        { name: "Bekliyor", value: 0, color: "#f59e0b" },
+        { name: "İptal", value: 0, color: "#ef4444" },
+      ];
+    }
+
+    let inProgress = total - (completed + pending);
+    if (inProgress < 0) inProgress = 0; 
+
+    // Bütün '||' sahte verileri ve sabit 5 rakamı temizlendi!
     return [
-      { name: "Tamamlandı", value: Math.round((completed / total) * 100) || 54, color: "#10b981" },
-      { name: "Devam Ediyor", value: Math.round((inProgress / total) * 100) || 23, color: "#3b82f6" },
-      { name: "Bekliyor", value: Math.round((pending / total) * 100) || 18, color: "#f59e0b" },
-      { name: "İptal", value: 5, color: "#ef4444" },
+      { name: "Tamamlandı", value: Math.round((completed / total) * 100), color: "#10b981" },
+      { name: "Devam Ediyor", value: Math.round((inProgress / total) * 100), color: "#3b82f6" },
+      { name: "Bekliyor", value: Math.round((pending / total) * 100), color: "#f59e0b" },
+      { name: "İptal", value: 0, color: "#ef4444" }, 
     ];
   });
 
@@ -131,30 +180,10 @@ export class App implements OnInit {
   ];
 
   // 👇 DÜZELTİLEN KISIM: SignalR Dinleyicisi 👇
-  constructor() {
-    effect(() => {
-      // Sinyali dinliyoruz: workOrderUpdated() her değiştiğinde burası tetiklenir
-      const updateData = this.signalrService.workOrderUpdated();
-      
-      if (updateData) {
-        console.log('🔔 Backendden canlı sinyal geldi, ekran yenileniyor!', updateData);
-        
-        // Gelen canlı sinyalle sayfayı anında yeniliyoruz!
-        this.refreshData();
 
-        // Gelen mesajı arayüzdeki bildirimler (çan) kutusuna da ekleyelim:
-        const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-        const newNotif: NotificationItem = {
-          id: Date.now(),
-          type: 'info',
-          message: typeof updateData === 'string' ? updateData : 'Sistemde yeni bir güncelleme var!',
-          time: now
-        };
-        this.notifications.update(list => [newNotif, ...list]);
-      }
-    }); // Kapanışlar eklendi
-  } // Kapanışlar eklendi
 
+    // 3. SignalR Canlı Bildirim Dinleyicisi (Sildiğini sandığın o kritik kod)
+    
   ngOnInit() {
     this.loadRealData();
     this.loadWorkOrders();
@@ -305,7 +334,7 @@ export class App implements OnInit {
   }
 
   // --- KAYDET / GÜNCELLE METODU ---
-  submitNewOrder() {
+ submitNewOrder() {
     const formValue = this.newOrderForm();
     if (!formValue.title.trim()) {
       alert('Lütfen iş emri başlığı giriniz!');
@@ -315,45 +344,39 @@ export class App implements OnInit {
     const currentEditId = this.editingOrderId();
 
     if (currentEditId !== null) {
+      // Güncelleme Payload'ı
       const updatePayload = {
         id: currentEditId,
         title: formValue.title,
         description: formValue.description,
-        state: Number(formValue.status) || 1,
+        state: Number(formValue.state) || 1,
         technicianId: formValue.technicianId ? Number(formValue.technicianId) : null,
         customerId: Number(formValue.customerId)
       };
 
-      fetch('https://localhost:7190/api/WorkOrders', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
+      // FETCH YERİNE dashboardService KULLANDIK
+      this.dashboardService.updateWorkOrder(currentEditId, updatePayload).subscribe({
+        next: () => {
+          console.log('İş emri başarıyla güncellendi!');
+          this.refreshData(); // Tabloyu ve istatistikleri yenile
+          this.closeModal();  // Formu kapat
         },
-        body: JSON.stringify(updatePayload)
-      })
-      .then((res: any) => {
-        if (!res.ok) throw new Error('Sunucu hatası: ' + res.status);
-        console.log('İş emri başarıyla güncellendi!');
-        this.refreshData(); // Tabloyu yenile
-        this.closeModal();  // Formu kapat
-      })
-      .catch((err: any) => {
-        console.error('Güncelleme hatası detayları:', err);
-        alert('Güncelleme başarısız! Konsola bak.');
+        error: (err: any) => {
+          console.error('Güncelleme hatası:', err);
+          alert('Güncelleme başarısız! Konsola bak.');
+        }
       });
-        
-      return; 
-    }
-    else {
+    } else {
+      // Yeni Ekleme
       this.dashboardService.createWorkOrder(formValue).subscribe({
         next: (newId: any) => {
           console.log('🎉 Başarıyla eklendi! Yeni ID:', newId);
           this.closeModal();
-          this.refreshData(); // Direkt refresh atalım, sayılar da güncellensin
+          this.refreshData();
         },
         error: (err: any) => {
           console.error('Ekleme hatası:', err);
-          alert('İş emri eklenirken bir hata oluştu! Müşteri ID geçerli mi kontrol edin.');
+          alert('İş emri eklenirken bir hata oluştu!');
         }
       });
     }
